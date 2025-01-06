@@ -6,13 +6,15 @@ import LoginView  from '../views/LoginRegister.vue';
 import RegisterView  from '../views/Regist.vue';
 import IndexView from '../views/Index.vue';
 import MovieView from '../views/Movie.vue';
+import SearchPage from '../components/movie/SearchPage.vue';
 
 // 定义路由
 const routes = [
-  { path: '/login', component: LoginView  },
-  { path: '/regist', component: RegisterView  },
-  { path: '/index', component: IndexView },
-  { path: '/movie', component: MovieView },
+  { path: '/login', name:'Login', component: LoginView  },
+  { path: '/regist', name:'Regist', component: RegisterView  },
+  { path: '/index', name:'Index', component: IndexView },
+  { path: '/movie',  name:'MovieIndex', component: MovieView },
+  { path: '/search', name: 'SearchPage', component: SearchPage },
 ];
 
 // 创建路由器实例

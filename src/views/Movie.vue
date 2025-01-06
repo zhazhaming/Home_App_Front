@@ -7,10 +7,6 @@
 </template>
   
   <script setup>
-   import Header from '../components/movie/MovieHeader.vue';
-    import Carousel from '../components/movie/MovieCarousel.vue';
-    import MovieList from '../components/movie/MovieList.vue';
-    import Footer from '../components/movie/MovieFoot.vue';
     import MovieIndex from '../components/movie/MovieIndex.vue';
   </script>
   

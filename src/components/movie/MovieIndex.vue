@@ -1,162 +1,220 @@
 <template>
-  <div class="common-layout">
-    <el-container>
-      <!-- 电影首页导航栏 -->
-      <MovieHeader/>
-      <div class="main">
-        <div class="carousel-container">
-          <div class="carousel">
-            <div class="carousel-inner" :style="{ transform: `translateX(-${currentIndex * 100}%)` }">
-              <div v-for="(image, index) in images_list" :key="image.id" class="carousel-item">
-                <img :src="image.url" :alt="image.name" />
-              </div>
-            </div>
-          </div>
-          <div class="carousel-controls">
-            <button @click="prevSlide" class="control-button prev">&#10094;</button>
-            <button @click="nextSlide" class="control-button next">&#10095;</button>
-        
-          </div>
-          <div class="carousel-indicators">
-            <span v-for="(image, index) in images_list" :key="image.id" @click="goToSlide(index)"></span>
+  <div class="app-container">
+    <Sidebar />
+    <main class="main-content" @scroll="handleScroll">
+      <HeaderBar />
+      <section class="content">
+        <div class="section-header">
+          <h2>电影排行榜</h2>
+          <button @click="viewMore('movies')">更多</button>
+        </div>
+        <div class="movie-list">
+          <div class="movie-card" v-for="(movie, index) in movies" :key="movie.id">
+            <img :src="movie.img_url" alt="Movie Poster">
+            <p>{{ movie.name }}</p>
           </div>
         </div>
-      </div>
-      
-    </el-container>
+        <div class="section-header">
+          <h2>新片上映</h2>
+          <button @click="viewMore('newMovies')">更多</button>
+        </div>
+        <div class="movie-list">
+          <div class="movie-card" v-for="(newMovie, index) in newMovies" :key="newMovie.id">
+            <img :src="newMovie.img_url" alt="New Movie Poster">
+            <p>{{ newMovie.name }}</p>
+          </div>
+        </div>
+        <div class="section-header">
+          <h2>重磅热播</h2>
+          <button @click="viewMore('hotMovies')">更多</button>
+        </div>
+        <div class="movie-list">
+          <div class="movie-card" v-for="(hotMovie, index) in hotMovies" :key="hotMovie.id">
+            <img :src="hotMovie.img_url" alt="Hot Movie Poster">
+            <p>{{ hotMovie.name }}</p>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 </template>
 
-<script lang="ts" setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import MovieHeader from './MovieHeader.vue';
+<script>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import Sidebar from './Sidebar.vue';
+import HeaderBar from './HeaderBar.vue';
 
+export default {
+  components: {
+    Sidebar,
+    HeaderBar
+  },
+  setup() {
+    const request_url = ref('http://localhost:8100/movice/');
+    const movies = ref([]);
+    const newMovies = ref([]);
+    const hotMovies = ref([]);
 
-const images_list = reactive([
-  {id:'', name:'图片1', url:'https://img9.doubanio.com/view/photo/l_ratio_poster/public/p2903066285.jpg'},
-  {id:'', name:'图片2', url:'https://img9.doubanio.com/view/photo/l_ratio_poster/public/p2906647021.jpg'},
-  {id:'', name:'图片3', url:'https://img9.doubanio.com/view/photo/l_ratio_poster/public/p2902183869.jpg'},
-  {id:'', name:'图片4', url:'https://img9.doubanio.com/view/photo/l_ratio_poster/public/p2903145026.jpg'},
-  {id:'', name:'图片5', url:'https://img9.doubanio.com/view/photo/l_ratio_poster/public/p2904915169.jpg'},
-  {id:'', name:'图片6', url:'https://img9.doubanio.com/view/photo/l_ratio_poster/public/p2892062454.jpg'},
-  ]);
+    const fetchMovies = async () => {
+      try {
+        const response = await axios.get(request_url.value + 'getWellReceive?pageNum=1&pageSize=12');
+        movies.value = response.data.data;
+        console.log(movies.value);
+      } catch (error) {
+        console.error('Error fetching movies:', error);
+      }
+    };
 
-  const currentIndex = ref(0);
+    const fetchNewMovies = async () => {
+      try {
+        const response = await axios.get(request_url.value + 'getMoviesRecent?pageNum=1&pageSize=12');
+        newMovies.value = response.data.data;
+      } catch (error) {
+        console.error('Error fetching new movies:', error);
+      }
+    };
 
-let intervalId = null;
+    const fetchHotMovies = async () => {
+      try {
+        const response = await axios.get(`${request_url.value}hot-movies`);
+        hotMovies.value = response.data;
+      } catch (error) {
+        console.error('Error fetching hot movies:', error);
+      }
+    };
 
-const startAutoPlay = () => {
-  intervalId = setInterval(() => {
-    nextSlide();
-  }, 3000);
+    const viewMore = (category) => {
+      console.log(`View more ${category}`);
+      // 在这里实现跳转逻辑
+    };
+
+    const handleScroll = (event) => {
+      const bottom = event.target.scrollHeight - event.target.scrollTop === event.target.clientHeight;
+      if (bottom) {
+        console.log('Load more content');
+      }
+    };
+
+    const search = () => {
+      console.log('Search clicked');
+      // 在这里实现搜索逻辑
+    };
+
+    onMounted(() => {
+      fetchMovies();
+      fetchNewMovies();
+      fetchHotMovies();
+    });
+
+    return {
+      movies,
+      newMovies,
+      hotMovies,
+      viewMore,
+      handleScroll,
+      search
+    };
+  }
 };
-
-const stopAutoPlay = () => {
-  clearInterval(intervalId);
-};
-
-const nextSlide = () => {
-  currentIndex.value = (currentIndex.value + 1) % images_list.length;
-};
-
-const prevSlide = () => {
-  currentIndex.value = (currentIndex.value - 1 + images_list.length) % images_list.length;
-};
-
-const goToSlide = (index) => {
-  currentIndex.value = index;
-};
-
-onMounted(() => {
-  startAutoPlay();
-});
-
-onUnmounted(() => {
-  stopAutoPlay();
-});
-
 </script>
 
 <style scoped>
+.app-container {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: hidden;
+  height: 100vh;
+}
 
-.main {
-  height: 50%;
-  width: 100%;
+.sidebar {
+  width: 200px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.sidebar .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.sidebar ul {
+  list-style: none;
   padding: 0;
 }
 
-/* 轮播图 */
-.carousel-container {
-  width: 50%;
-  margin: 0 auto;
-  overflow: hidden;
-  position: relative;
-  
+.sidebar ul li {
+  margin: 10px 0;
 }
 
-.carousel {
-  width: 100%;
-  display: flex;
-  transition: transform 0.5s ease;
+.main-content {
+  flex: 1;
+  padding: 20px;
+  min-width: 0;
+  overflow-y: auto;
 }
 
-.carousel-inner {
-  display: flex;
-  width: 100%;
-  margin: 0%;
-}
-
-.carousel-item {
-  flex: 0 0 100%;
-  width: 100%;
-  display: flex; /* 使用 Flexbox 布局 */
-  justify-content: center; /* 水平居中 */
-  align-items: center; /* 垂直居中 */
-}
-
-.carousel-item img {
-  width: 50%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.carousel-controls {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  transform: translateY(-50%);
+.header {
   display: flex;
   justify-content: space-between;
-  padding: 21% 21%;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.carousel-controls 
-
-
-.carousel-indicators {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+.search-bar {
   display: flex;
+  align-items: center;
   gap: 10px;
+  flex: 1;
 }
 
+.user-info {
+  display: flex;
+  align-items: center;
+}
 
+.content {
+  margin-top: 20px;
+}
 
-.carousel-indicators span {
-  width: 10px;
-  height: 10px;
-  background-color: rgba(20, 1, 1, 0.5);
-  border-radius: 50%;
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.movie-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.movie-card {
+  text-align: center;
+}
+
+.movie-card img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+button {
+  padding: 5px 10px;
   cursor: pointer;
 }
 
-.carousel-indicators span.active {
-  background-color: rgba(255, 255, 255, 1);
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    order: 1;
+  }
+  .main-content {
+    order: 2;
+  }
 }
-
 </style>
