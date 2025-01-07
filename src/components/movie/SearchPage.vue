@@ -9,7 +9,7 @@
           <el-button type="primary" @click="goBack">返回电影页</el-button>
         </div>
         <div v-else class="movie-grid">
-          <div class="movie-card" v-for="movie in movies" :key="movie.id">
+          <div class="movie-card" v-for="movie in movies" :key="movie.id" @click="goToMovieDetail(movie.id)">
             <img :src="movie.img_url" alt="Movie Poster">
             <div class="movie-info">
               <h3>{{ movie.name }}</h3>
@@ -35,6 +35,10 @@ const router = useRouter();
 const movieStore = useMovieStore();
 const movies = computed(() => movieStore.movies || []);
 console.log("get_movies:"+movies.value);
+const goToMovieDetail = (id) => {
+  router.push({ name: 'MovieDetail', params: { id } });
+};
+
 const download = (magnetUrl) => {
   window.open(magnetUrl, '_blank');
 };

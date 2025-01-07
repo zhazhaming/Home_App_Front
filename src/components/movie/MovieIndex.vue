@@ -10,8 +10,8 @@
         </div>
         <div class="movie-list">
           <div class="movie-card" v-for="(movie, index) in movies" :key="movie.id">
-            <img :src="movie.img_url" alt="Movie Poster">
-            <p>{{ movie.name }}</p>
+            <img :src="movie.img_url" alt="Movie Poster" @click="goToMovieDetail(movie.id)" class="clickable">
+            <p @click="goToMovieDetail(movie.id)" class="clickable">{{ movie.name }}</p>
           </div>
         </div>
         <div class="section-header">
@@ -20,8 +20,8 @@
         </div>
         <div class="movie-list">
           <div class="movie-card" v-for="(newMovie, index) in newMovies" :key="newMovie.id">
-            <img :src="newMovie.img_url" alt="New Movie Poster">
-            <p>{{ newMovie.name }}</p>
+            <img :src="newMovie.img_url" alt="New Movie Poster" @click="goToMovieDetail(newMovie.id)" class="clickable">
+            <p @click="goToMovieDetail(newMovie.id)" class="clickable">{{ newMovie.name }}</p>
           </div>
         </div>
         <div class="section-header">
@@ -30,8 +30,8 @@
         </div>
         <div class="movie-list">
           <div class="movie-card" v-for="(hotMovie, index) in hotMovies" :key="hotMovie.id">
-            <img :src="hotMovie.img_url" alt="Hot Movie Poster">
-            <p>{{ hotMovie.name }}</p>
+            <img :src="hotMovie.img_url" alt="Hot Movie Poster" @click="goToMovieDetail(hotMovie.id)" class="clickable">
+            <p @click="goToMovieDetail(hotMovie.id)" class="clickable">{{ hotMovie.name }}</p>
           </div>
         </div>
       </section>
@@ -41,6 +41,7 @@
 
 <script>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import Sidebar from './Sidebar.vue';
 import HeaderBar from './HeaderBar.vue';
@@ -51,6 +52,7 @@ export default {
     HeaderBar
   },
   setup() {
+    const router = useRouter();
     const request_url = ref('http://localhost:8100/movice/');
     const movies = ref([]);
     const newMovies = ref([]);
@@ -101,6 +103,10 @@ export default {
       // 在这里实现搜索逻辑
     };
 
+    const goToMovieDetail = (id) => {
+      router.push({ name: 'MovieDetail', params: { id } });
+    };
+
     onMounted(() => {
       fetchMovies();
       fetchNewMovies();
@@ -113,7 +119,8 @@ export default {
       hotMovies,
       viewMore,
       handleScroll,
-      search
+      search,
+      goToMovieDetail
     };
   }
 };
@@ -195,12 +202,19 @@ export default {
 
 .movie-card {
   text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.movie-card:hover {
+  transform: scale(1.05);
 }
 
 .movie-card img {
   width: 100%;
   height: auto;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 button {
@@ -216,5 +230,14 @@ button {
   .main-content {
     order: 2;
   }
+}
+
+.clickable {
+  color: black;
+  text-decoration: none;
+}
+
+.clickable:hover {
+  text-decoration: underline;
 }
 </style>
