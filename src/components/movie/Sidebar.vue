@@ -2,7 +2,7 @@
   <aside class="sidebar">
     <div class="logo">HOME VIDEO</div>
     <ul>
-      <li v-for="item in menuItems" :key="item.name" @click="navigate(item.route)">
+      <li v-for="item in menuItems" :key="item.name" @click="navigate(item.route)" class="menu-item">
         {{ item.name }}
       </li>
     </ul>
@@ -40,12 +40,15 @@ export default {
   padding: 20px;
   flex-shrink: 0;
   overflow-y: auto;
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 20px;
+  color: #333;
 }
 
 ul {
@@ -53,13 +56,16 @@ ul {
   padding: 0;
 }
 
-li {
+.menu-item {
   margin: 10px 0;
   cursor: pointer;
-  transition: color 0.3s;
+  padding: 10px;
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-li:hover {
-  color: #007bff;
+.menu-item:hover {
+  background-color: #007bff;
+  color: white;
 }
 </style> 
