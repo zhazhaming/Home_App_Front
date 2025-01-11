@@ -12,12 +12,15 @@
               <div class="tags">
                 <span v-for="tag in movie.tags" :key="tag">{{ tag }}</span>
               </div>
-              <p>导演: {{ movie.director }}</p>
-              <p>主演: {{ movie.actors }}</p>
-              <p>更新: {{ new Date(movie.update_date).toLocaleString() }}</p>
-              <p>片长: {{ movie.duration }}</p>
-              <p>评分: {{ movie.rating }}</p>
-              <p>简介: {{ movie.description }}</p>
+              <p>{{ movie.director ? `导演: ${movie.director}` : '' }}</p>
+              <p>{{ movie.actors && movie.actors !== 'NULL' ? `主演: ${movie.actors}` : '' }}</p>
+              <p>{{ movie.category ? `类别: ${movie.category}` : '' }}</p>
+              <p>{{ movie.date ? `更新: ${new Date(movie.date).toLocaleString()}` : '' }}</p>
+              <p>{{ movie.duration ? `片长: ${movie.duration}分钟` : '' }}</p>
+              <p>{{ movie.language ? `语言: ${movie.language}` : '' }}</p>
+              <p>{{ movie.origin ? `产地: ${movie.origin}` : '' }}</p>
+              <p>{{ movie.douban_rating ? `评分: ${movie.douban_rating}` : '' }}</p>
+              <p>{{ movie.description ? `简介: ${movie.description}` : '' }}</p>
               <el-button type="danger" @click="download(movie.magnet_url)">立即下载</el-button>
             </div>
           </div>
@@ -63,8 +66,9 @@ const nowShowingMovies = ref([]);
 
 const fetchMovieDetails = async (movieId) => {
   try {
-    const response = await axios.get(`http://localhost:8100/movice/getById?movie_id=${movieId}`);
+    const response = await axios.get(`http://localhost:8100/movice/detail/getById?id=${movieId}`);
     movie.value = response.data.data;
+    console.log(movie.value);
 
     // 获取相关推荐
     const relatedResponse = await axios.get(request_url.value + 'getWellReceive?pageNum=1&pageSize=12');

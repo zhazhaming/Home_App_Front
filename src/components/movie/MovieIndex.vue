@@ -52,20 +52,20 @@ export default {
     HeaderBar
   },
   setup() {
-    const router = useRouter();
+const router = useRouter();
     const request_url = ref('http://localhost:8100/movice/');
-    const movies = ref([]);
+const movies = ref([]);
     const newMovies = ref([]);
     const hotMovies = ref([]);
 
     const fetchMovies = async () => {
-      try {
+  try {
         const response = await axios.get(request_url.value + 'getWellReceive?pageNum=1&pageSize=12');
-        movies.value = response.data.data;
+    movies.value = response.data.data;
         console.log(movies.value);
-      } catch (error) {
-        console.error('Error fetching movies:', error);
-      }
+  } catch (error) {
+    console.error('Error fetching movies:', error);
+  }
     };
 
     const fetchNewMovies = async () => {
@@ -103,7 +103,7 @@ export default {
       // 在这里实现搜索逻辑
     };
 
-    const goToMovieDetail = (id) => {
+const goToMovieDetail = (id) => {
       router.push({ name: 'MovieDetail', params: { id } });
     };
 
@@ -196,7 +196,7 @@ export default {
 
 .movie-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 20px;
 }
 
