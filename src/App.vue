@@ -6,12 +6,12 @@
 </template>
 
 <script>
-import IndexRegister from './views/Index.vue';
-  export default {
-    name: 'App',
-    mounted() {},
-  }
-  
+import Index from './views/Index.vue';
+
+export default {
+  name: 'App',
+  mounted() {},
+}
 </script>
 
 <style>

@@ -60,8 +60,8 @@ const movies = ref([]);
 
     const fetchMovies = async () => {
   try {
-        const response = await axios.get(request_url.value + 'getWellReceive?pageNum=1&pageSize=12');
-    movies.value = response.data.data;
+        const response = await axios.get(request_url.value + 'getPopular?pageNum=1&pageSize=12');
+        movies.value = response.data.data;
         console.log(movies.value);
   } catch (error) {
     console.error('Error fetching movies:', error);
@@ -70,7 +70,7 @@ const movies = ref([]);
 
     const fetchNewMovies = async () => {
       try {
-        const response = await axios.get(request_url.value + 'getMoviesRecent?pageNum=1&pageSize=12');
+        const response = await axios.get(request_url.value + 'getHotMovie?pageNum=1&pageSize=12');
         newMovies.value = response.data.data;
       } catch (error) {
         console.error('Error fetching new movies:', error);
@@ -79,8 +79,8 @@ const movies = ref([]);
 
     const fetchHotMovies = async () => {
       try {
-        const response = await axios.get(`${request_url.value}hot-movies`);
-        hotMovies.value = response.data;
+        const response = await axios.get(request_url.value + 'getMoviesRecent?pageNum=1&pageSize=12');
+        hotMovies.value = response.data.data;
       } catch (error) {
         console.error('Error fetching hot movies:', error);
       }

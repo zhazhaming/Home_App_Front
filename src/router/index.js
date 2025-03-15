@@ -14,7 +14,7 @@ import MovieIndex from '../components/movie/movie_index.vue';
 const routes = [
   { path: '/login', name:'Login', component: LoginView  },
   { path: '/regist', name:'Regist', component: RegisterView  },
-  { path: '/index', name:'Index', component: IndexView },
+  { path: '/', name:'Index', component: IndexView },
   { path: '/movie',  name:'MovieIndex', component: MovieView },
   { path: '/search', name: 'SearchPage', component: SearchPage },
   { path: '/movie/:id', name: 'MovieDetail', component: MovieIndex },
