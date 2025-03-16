@@ -39,11 +39,12 @@
   import { ref, reactive } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
+  import { useUserStore } from '../stores/userStore';
 
   const url = 'http://localhost:8100';
-
-  const router = reactive(useRouter());
-  const use_data = reactive({username: '', password: '', token: '',});
+  const router = useRouter();
+  const userStore = useUserStore();
+  const use_data = reactive({id: '', username: '', password: '', token: ''});
   
   // 登录/注册表单提交
   const handleSubmit = async () => {
@@ -56,8 +57,19 @@
       });
       if(response.data.code == 200) {
         use_data.token = response.data.data.token;
+        use_data.id = response.data.data.id;
+        console.log('用户id:', response.data.data.id);
         localStorage.setItem('user_token', use_data.token);
-        console.log(use_data.token)
+        
+        // 保存用户信息到状态存储
+        userStore.setUserInfo({
+          user_id: use_data.id,
+          username: use_data.username,
+          token: use_data.token,
+          avatar: response.data.data.avatar || 'http://120.78.1.49/group1/M00/00/00/rBhVEWfVteKAFat3AADG2omeE7U077.jpg'
+        });
+        
+        console.log(use_data.token);
         router.push('/'); // 登录成功后跳转到首页
       }
       else if(response.data.code >=400 && response.data.code < 500){
@@ -69,7 +81,7 @@
     } catch (error) {
       console.error("请求失败:", error);
     }
-    };
+  };
 
   const handleRegister = () => {
     console.log('注册');

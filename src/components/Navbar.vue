@@ -12,19 +12,50 @@
         <router-link to="/smart-home" class="nav-item">智能家庭</router-link>
         <router-link to="/more" class="nav-item">更多</router-link>
       </div>
-      <button class="go-button" @click="goToLogin">Go to My Home</button>
+      
+      <!-- 根据登录状态显示不同内容 -->
+      <div v-if="userStore.isLoggedIn" class="user-profile">
+        <el-dropdown>
+          <span class="el-dropdown-link">
+            <el-avatar :src="userStore.avatar"></el-avatar>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="goToUserCenter">个人中心</el-dropdown-item>
+              <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+      <button v-else class="go-button" @click="goToLogin">Go to My Home</button>
     </div>
   </nav>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { useUserStore } from '../stores/userStore';
+import { onMounted } from 'vue';
+
 const router = useRouter();
-const name = "Navbar";
+const userStore = useUserStore();
+
+const goToUserCenter = () => {
+  router.push('/user/center');
+};
+
 const goToLogin = () => {
-  // 跳转到登录页面的逻辑
   router.push('/login'); 
 };
+
+const handleLogout = () => {
+  userStore.logout();
+  router.push('/');
+};
+
+onMounted(() => {
+  userStore.checkLoginStatus();
+});
 </script>
 
 <style scoped>
@@ -129,6 +160,16 @@ const goToLogin = () => {
   .go-button {
     margin-top: 10px;
   }
+}
+
+/* 添加用户头像样式 */
+.user-profile {
+  cursor: pointer;
+}
+
+.el-dropdown-link {
+  display: flex;
+  align-items: center;
 }
 </style>
   

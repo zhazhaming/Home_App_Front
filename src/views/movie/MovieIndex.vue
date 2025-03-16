@@ -43,8 +43,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-import Sidebar from './Sidebar.vue';
-import HeaderBar from './HeaderBar.vue';
+import Sidebar from '../../components/movie/Sidebar.vue';
+import HeaderBar from '../../components/movie/HeaderBar.vue';
 
 export default {
   components: {

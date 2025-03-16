@@ -14,7 +14,7 @@ export default {
   data() {
     return {
       menuItems: [
-        { name: '首页', route: '/index' },
+        { name: '首页', route: '/' },
         { name: '电影', route: '/movie' },
         { name: '连续剧', route: '/series' },
         { name: '动漫', route: '/anime' },

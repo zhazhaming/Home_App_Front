@@ -7,7 +7,7 @@
 </template>
   
   <script setup>
-    import MovieIndex from '../components/movie/MovieIndex.vue';
+    import MovieIndex from './MovieIndex.vue';
   </script>
   
   <style scoped>

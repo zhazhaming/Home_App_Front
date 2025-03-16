@@ -54,8 +54,8 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-import Sidebar from './Sidebar.vue';
-import HeaderBar from './HeaderBar.vue';
+import Sidebar from '../../components/movie/Sidebar.vue';
+import HeaderBar from '../../components/movie/HeaderBar.vue';
 
 const request_url = ref('http://localhost:8100/movice/');
 const route = useRoute();
