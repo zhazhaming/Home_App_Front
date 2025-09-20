@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref } from 'vue';
 import { useUserStore } from '../../stores/userStore';
 
 const props = defineProps({

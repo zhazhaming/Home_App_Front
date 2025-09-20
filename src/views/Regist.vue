@@ -39,55 +39,53 @@
 import axios from 'axios';
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-    const url = 'http://localhost:8100'
-    const router = useRouter();
-    const confirmPassword = ref('');
+import { ElMessage } from 'element-plus';
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const form = reactive({
-      username: '',
-      password: '',
-      email: ''
-    });
+const url = 'http://localhost:8100'
+const router = useRouter();
+const confirmPassword = ref('');
 
-    const register = async() => {
-      // 注册逻辑，例如表单验证和提交
-      if (form.password !== confirmPassword.value) {
-        alert('密码和确认密码不一致');
-        return;
-      }
-      
-      if (!emailRegex.test(form.email)) {
-        alert('请输入有效的邮箱地址');
-        return;
-      }
-      
-      // 这里可以进行后端 API 调用
-      try {
-          const response = await axios.post(`${url}/user/regist`,form);
-          console.log(response.data);
-          if(response.data.code == 200) {
-            alert('注册成功');
-            router.push('/login'); // 注册成功后跳转到登录页面
-          }
-          else if(response.data.code >=400 && response.data.code < 500){
-            alert("客户端请求错误");
-          }
-          else if (response.data.code >= 500) {
-            alert('请求服务器错误，请联系管理员！！');
-          }
-          else {
-            alert('注册失败');
-          }
-        } catch (error) {
-          console.error("请求失败:", error);
-        }
-    };
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const form = reactive({
+  username: '',
+  password: '',
+  email: ''
+});
 
-    const goToLogin = () => {
-      // 跳转到登录页面的逻辑
-      router.push('/login'); // 使用 Vue Router 跳转
-    };
+const register = async() => {
+  // 注册逻辑，例如表单验证和提交
+  if (form.password !== confirmPassword.value) {
+    ElMessage.error('密码和确认密码不一致');
+    return;
+  }
+  
+  if (!emailRegex.test(form.email)) {
+    ElMessage.error('请输入有效的邮箱地址');
+    return;
+  }
+  
+  // 这里可以进行后端 API 调用
+  try {
+    const response = await axios.post(`${url}/user/regist`, form);
+    console.log(response.data);
+    if(response.data.code == 200) {
+      ElMessage.success('注册成功');
+      router.push('/login'); // 注册成功后跳转到登录页面
+    }
+    else {
+      // 使用 ElMessage 显示服务器返回的错误信息
+      ElMessage.error(response.data.msg || '注册失败，请稍后再试');
+    }
+  } catch (error) {
+    console.error("请求失败:", error);
+    ElMessage.error('网络错误，请检查您的网络连接');
+  }
+};
+
+const goToLogin = () => {
+  // 跳转到登录页面的逻辑
+  router.push('/login'); // 使用 Vue Router 跳转
+};
 </script>
 
 <style scoped>

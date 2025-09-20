@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch } from 'vue';
+import { ref, watch } from 'vue';
 import WatchHistory from './WatchHistory.vue';
 import BookmarkCollection from './BookmarkCollection.vue';
 

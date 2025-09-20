@@ -48,9 +48,9 @@
           
           <el-form-item label="性别" prop="gender">
             <el-radio-group v-model="userForm.gender">
-              <el-radio label="male">男</el-radio>
-              <el-radio label="female">女</el-radio>
-              <el-radio label="other">其他</el-radio>
+              <el-radio label="1">男</el-radio>
+              <el-radio label="2">女</el-radio>
+              <el-radio label="0">其他</el-radio>
             </el-radio-group>
           </el-form-item>
           
@@ -98,7 +98,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '../../stores/userStore';
-import axios from 'axios';
+import request from '../../utils/request';
 
 const userStore = useUserStore();
 const avatar = ref(userStore.avatar);
@@ -111,13 +111,15 @@ const uploadHeaders = {
 
 // 表单数据
 const userForm = reactive({
+  id: '',
   username: userStore.username || '',
   email: '',
   phone: '',
-  gender: 'male',
+  gender: '1',
   oldPassword: '',
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  avatar: userStore.avatar // 初始化为当前头像
 });
 
 // 表单验证规则
@@ -153,21 +155,52 @@ const rules = reactive({
 // 获取用户信息
 const fetchUserInfo = async () => {
   try {
+    // 检查用户是否已登录
+    if (!userStore.isLoggedIn || !userStore.user_id) {
+      // 尝试从localStorage恢复用户信息
+      const userData = JSON.parse(localStorage.getItem('user_info') || '{}');
+      if (userData.user_id) {
+        userStore.setUserInfo(userData);
+        console.log(userData);
+        userForm.id = parseInt(userData.user_id);
+        userForm.username = userData.username;
+        userForm.email = userData.email || '';
+        userForm.phone = userData.phone || '';
+        userForm.gender = userData.gender ? userData.gender.toString() : '1';
+        userForm.avatar = userData.avatar || avatar.value;
+      } else {
+        ElMessage.warning('请先登录');
+        return;
+      }
+    } else {
+      // 如果已登录，从store中获取id
+      userForm.id = parseInt(userStore.user_id);
+    }
+
     console.log(`发送请求id：${userStore.user_id}`);
-    const response = await axios.post('http://localhost:8100/user/info?id=' + userStore.user_id, {}, {
-      headers: { Authorization: `Bearer ${userStore.token}` }
+    const response = await request({
+      url: '/user/info',
+      method: 'post',
+      params: { id: parseInt(userStore.user_id) }
     });
     
-    if (response.data.code === 200) {
-      const userData = response.data.data;
+    if (response.code === 200) {
+      const userData = response.data;
+      userForm.id = parseInt(userData.user_id || userStore.user_id);
       userForm.username = userData.username || userForm.username;
       userForm.email = userData.email || '';
+      // 确保显示手机号和性别
       userForm.phone = userData.phone || '';
-      userForm.gender = userData.gender || 'male';
+      userForm.gender = userData.gender !== undefined ? userData.gender.toString() : '1';
+      // 更新头像
+      if (userData.avatar) {
+        userForm.avatar = userData.avatar;
+        avatar.value = userData.avatar;
+      }
     }
   } catch (error) {
     console.error('获取用户信息失败:', error);
-    ElMessage.error('获取用户信息失败');
+    ElMessage.error('获取用户信息失败: ' + (error.response?.data?.msg || error.message));
   }
 };
 
@@ -175,6 +208,7 @@ const fetchUserInfo = async () => {
 const handleAvatarSuccess = (response) => {
   if (response.code === 200) {
     avatar.value = response.data.avatarUrl;
+    userForm.avatar = response.data.avatarUrl; // 更新表单中的头像
     userStore.setUserInfo({
       ...userStore,
       avatar: response.data.avatarUrl
@@ -211,10 +245,12 @@ const submitForm = async () => {
       try {
         // 构建要提交的数据
         const updateData = {
+          id: parseInt(userForm.id),
           username: userForm.username,
           email: userForm.email,
           phone: userForm.phone,
-          gender: userForm.gender
+          gender: parseInt(userForm.gender),
+          avatar: userForm.avatar // 添加头像字段
         };
         
         // 如果填写了密码，则添加密码相关字段
@@ -223,29 +259,45 @@ const submitForm = async () => {
           updateData.newPassword = userForm.newPassword;
         }
         
-        const response = await axios.post('http://localhost:8100/user/update', updateData, {
-          headers: { Authorization: `Bearer ${userStore.token}` }
+        const response = await request({
+          url: '/user/update',
+          method: 'post',
+          data: updateData
         });
         
-        if (response.data.code === 200) {
+        if (response.code === 200) {
           ElMessage.success('个人信息更新成功');
           
-          // 更新 store 中的用户名
-          userStore.setUserInfo({
-            ...userStore,
-            username: userForm.username
-          });
+          // 更新 store 中的用户信息
+          const updatedUserInfo = {
+            ...userStore.$state,
+            username: userForm.username,
+            avatar: userForm.avatar,
+            phone: userForm.phone,
+            email: userForm.email,
+            gender: parseInt(userForm.gender)
+          };
+          userStore.setUserInfo(updatedUserInfo);
+          
+          // 同时更新localStorage中的用户信息
+          localStorage.setItem('user_info', JSON.stringify(updatedUserInfo));
           
           // 清空密码字段
           userForm.oldPassword = '';
           userForm.newPassword = '';
           userForm.confirmPassword = '';
         } else {
-          ElMessage.error(response.data.message || '更新失败');
+          // 显示后端返回的错误信息
+          ElMessage.error(response.msg || response.message || '更新失败');
         }
       } catch (error) {
         console.error('更新用户信息失败:', error);
-        ElMessage.error('更新用户信息失败');
+        // 显示详细的错误信息
+        if (error.response && error.response.data) {
+          ElMessage.error(error.response.data.msg || '更新用户信息失败');
+        } else {
+          ElMessage.error('更新用户信息失败: ' + error.message);
+        }
       }
     } else {
       ElMessage.warning('请正确填写表单');
@@ -263,6 +315,8 @@ const resetForm = () => {
 };
 
 onMounted(() => {
+  // 确保用户信息已加载
+  userStore.checkLoginStatus();
   fetchUserInfo();
 });
 </script>

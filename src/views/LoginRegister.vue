@@ -40,6 +40,7 @@
   import { useRouter } from 'vue-router';
   import axios from 'axios';
   import { useUserStore } from '../stores/userStore';
+  import { ElMessage } from 'element-plus';
 
   const url = 'http://localhost:8100';
   const router = useRouter();
@@ -48,10 +49,8 @@
   
   // 登录/注册表单提交
   const handleSubmit = async () => {
-    console.log('用户名:', use_data.username);
-    console.log('密码:', use_data.password);
     try {
-        const response = await axios.post(`${url}/user/login`,{
+      const response = await axios.post(`${url}/user/login`,{
         nameoremail: use_data.username,
         password: use_data.password,
       });
@@ -72,14 +71,23 @@
         console.log(use_data.token);
         router.push('/'); // 登录成功后跳转到首页
       }
-      else if(response.data.code >=400 && response.data.code < 500){
-          alert("客户端请求错误");
-        }
-      else if (response.data.code >= 500) {
-        alert('请求服务器错误，请联系管理员！！');
+      else {
+        // 使用 ElMessage 显示服务器返回的错误信息
+        ElMessage.error(response.data.data.msg || '登录失败，请稍后再试');
       }
     } catch (error) {
       console.error("请求失败:", error);
+      // 处理网络错误或服务器错误
+      if (error.response) {
+        // 服务器返回了错误状态码
+        ElMessage.error(error.response.data.msg || '用户不存在或用户名密码错误，请检查后重试！');
+      } else if (error.request) {
+        // 请求发送了但没有收到响应
+        ElMessage.error('服务器无响应，请稍后再试');
+      } else {
+        // 请求设置时发生错误
+        ElMessage.error('请求错误，请稍后再试');
+      }
     }
   };
 
