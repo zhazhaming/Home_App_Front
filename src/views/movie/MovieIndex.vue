@@ -4,6 +4,15 @@
     <main class="main-content" @scroll="handleScroll">
       <HeaderBar />
       <section class="content">
+        <div class="reservation-cta">
+          <div class="cta-text">
+            <h3>预约上映提醒</h3>
+            <p>关注你想看的电影，上线第一时间推送给你。</p>
+          </div>
+          <div class="cta-actions">
+            <el-button type="primary" @click="openReservation">立即预约</el-button>
+          </div>
+        </div>
         <div class="section-header">
           <h2>电影排行榜</h2>
           <button @click="viewMore('movies')">更多</button>
@@ -36,6 +45,20 @@
         </div>
       </section>
     </main>
+    <el-dialog v-model="showReservation" title="预约上映提醒" width="480px">
+      <el-form :model="reservationForm" :rules="reservationRules" label-width="100px">
+        <el-form-item label="电影名称" prop="movieName">
+          <el-input v-model="reservationForm.movieName" placeholder="请输入电影名称"></el-input>
+        </el-form-item>
+        <el-form-item label="通知邮箱" prop="contactEmail">
+          <el-input v-model="reservationForm.contactEmail" placeholder="example@mail.com"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showReservation = false">取 消</el-button>
+        <el-button type="primary" @click="submitReservation">提 交</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -43,8 +66,11 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { ElMessage } from 'element-plus';
 import Sidebar from '../../components/movie/Sidebar.vue';
 import HeaderBar from '../../components/movie/HeaderBar.vue';
+import { useUserStore } from '../../stores/userStore';
+import { ENV_CONFIG } from '../../config/env';
 
 export default {
   components: {
@@ -53,7 +79,8 @@ export default {
   },
   setup() {
 const router = useRouter();
-    const request_url = ref('http://localhost:8100/movice/');
+    const request_url = ref(`${ENV_CONFIG.API_BASE_URL}/movice/`);
+    const userStore = useUserStore();
 const movies = ref([]);
     const newMovies = ref([]);
     const hotMovies = ref([]);
@@ -103,6 +130,63 @@ const movies = ref([]);
       // 在这里实现搜索逻辑
     };
 
+    // 预约表单
+    const showReservation = ref(false);
+    const reservationForm = ref({
+      movieName: '',
+      contactEmail: ''
+    });
+    const reservationRules = {
+      movieName: [{ required: true, message: '请输入电影名称', trigger: 'blur' }],
+      contactEmail: [
+        { required: true, message: '请输入邮箱', trigger: 'blur' },
+        { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+      ]
+    };
+
+    const openReservation = () => {
+      // 打开对话框时再次尝试自动填充邮箱
+      if (userStore.isLoggedIn && userStore.email) {
+        reservationForm.value.contactEmail = userStore.email;
+      } else if (!reservationForm.value.contactEmail) {
+        try {
+          const stored = JSON.parse(localStorage.getItem('user_info') || '{}');
+          if (stored && stored.email) {
+            reservationForm.value.contactEmail = stored.email;
+          }
+        } catch {}
+      }
+      showReservation.value = true;
+    };
+
+    const submitReservation = async () => {
+      try {
+        if (!reservationForm.value.movieName || !reservationForm.value.contactEmail) {
+          return;
+        }
+        // 提交到后端
+        const response = await axios.post(`${ENV_CONFIG.API_BASE_URL}/movice/reservation`, {
+          title: reservationForm.value.movieName,
+          notifyEmail: reservationForm.value.contactEmail,
+          userId: userStore?.user_id || '',
+          username: userStore?.username || ''
+        });
+        
+        // 显示成功消息
+        if (response.data && response.data.code === 200) {
+          ElMessage.success(response.data.data);
+        } else {
+          ElMessage.error('服务器错误，预约失败');
+        }
+        
+        showReservation.value = false;
+        reservationForm.value = { movieName: '', contactEmail: '' };
+      } catch (e) {
+        console.error('预约失败', e);
+        ElMessage.error('预约失败，请稍后重试');
+      }
+    };
+
 const goToMovieDetail = (id) => {
       router.push({ name: 'MovieDetail', params: { id } });
     };
@@ -111,6 +195,18 @@ const goToMovieDetail = (id) => {
       fetchMovies();
       fetchNewMovies();
       fetchHotMovies();
+
+      // 预填充邮箱（优先从 userStore 获取）
+      if (userStore.isLoggedIn && userStore.email) {
+        reservationForm.value.contactEmail = userStore.email;
+      } else {
+        try {
+          const stored = JSON.parse(localStorage.getItem('user_info') || '{}');
+          if (stored && stored.email) {
+            reservationForm.value.contactEmail = stored.email;
+          }
+        } catch {}
+      }
     });
 
     return {
@@ -120,7 +216,12 @@ const goToMovieDetail = (id) => {
       viewMore,
       handleScroll,
       search,
-      goToMovieDetail
+      goToMovieDetail,
+      showReservation,
+      reservationForm,
+      reservationRules,
+      openReservation,
+      submitReservation
     };
   }
 };
@@ -187,6 +288,26 @@ const goToMovieDetail = (id) => {
   margin-top: 20px;
 }
 
+.reservation-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #ecf5ff 0%, #f7fbff 100%);
+  border: 1px solid #d9ecff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.reservation-cta .cta-text h3 {
+  margin: 0 0 6px 0;
+}
+
+.reservation-cta .cta-text p {
+  margin: 0;
+  color: #606266;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -239,5 +360,10 @@ button {
 
 .clickable:hover {
   text-decoration: underline;
+}
+
+/* 预约弹窗覆盖默认宽度 */
+:deep(.el-dialog__header) {
+  margin-right: 0;
 }
 </style>

@@ -103,9 +103,9 @@
 import { ref, onMounted, nextTick, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import axios from 'axios';
+import { ENV_CONFIG } from '../../config/env';
 import { useUserStore } from '../../stores/userStore';
-import marked from 'marked';
-import DOMPurify from 'dompurify';
+// 轻量化：移除外部 markdown 依赖，使用基础转义渲染
 
 const userStore = useUserStore();
 const aiAvatar = 'https://example.com/ai-avatar.png'; // AI头像URL
@@ -121,7 +121,7 @@ const messagesContainer = ref(null);
 // 获取聊天历史
 const fetchChatHistory = async () => {
   try {
-    const response = await axios.get('http://localhost:8100/ai-chat/history', {
+    const response = await axios.get(`${ENV_CONFIG.API_BASE_URL}/ai-chat/history`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     });
     
@@ -139,7 +139,7 @@ const fetchChatHistory = async () => {
 // 获取特定对话的消息
 const fetchChatMessages = async (chatId) => {
   try {
-    const response = await axios.get(`http://localhost:8100/ai-chat/messages/${chatId}`, {
+    const response = await axios.get(`${ENV_CONFIG.API_BASE_URL}/ai-chat/messages/${chatId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     });
     
@@ -158,7 +158,7 @@ const fetchChatMessages = async (chatId) => {
 // 创建新对话
 const createNewChat = async () => {
   try {
-    const response = await axios.post('http://localhost:8100/ai-chat/create', {}, {
+    const response = await axios.post(`${ENV_CONFIG.API_BASE_URL}/ai-chat/create`, {}, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     });
     
@@ -198,7 +198,7 @@ const renameChat = async (chat) => {
     });
     
     if (newTitle && newTitle.trim() !== chat.title) {
-      const response = await axios.put(`http://localhost:8100/ai-chat/rename/${chat.id}`, {
+      const response = await axios.put(`${ENV_CONFIG.API_BASE_URL}/ai-chat/rename/${chat.id}`, {
         title: newTitle.trim()
       }, {
         headers: { Authorization: `Bearer ${userStore.token}` }
@@ -231,7 +231,7 @@ const deleteChat = async (chatId) => {
       type: 'warning'
     });
     
-    const response = await axios.delete(`http://localhost:8100/ai-chat/delete/${chatId}`, {
+    const response = await axios.delete(`${ENV_CONFIG.API_BASE_URL}/ai-chat/delete/${chatId}`, {
       headers: { Authorization: `Bearer ${userStore.token}` }
     });
     
@@ -271,7 +271,7 @@ const sendMessage = async () => {
   isLoading.value = true;
   
   try {
-    const response = await axios.post(`http://localhost:8100/ai-chat/message/${selectedChatId.value}`, {
+    const response = await axios.post(`${ENV_CONFIG.API_BASE_URL}/ai-chat/message/${selectedChatId.value}`, {
       content: message
     }, {
       headers: { Authorization: `Bearer ${userStore.token}` }
@@ -339,9 +339,19 @@ const formatTime = (timeString) => {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 };
 
-// 格式化消息内容（支持Markdown）
+// 基础转义，保留换行
+const escapeHtml = (unsafe) => {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const formatMessage = (content) => {
-  return DOMPurify.sanitize(marked(content));
+  const escaped = escapeHtml(content || '');
+  return escaped.replace(/\n/g, '<br/>');
 };
 
 // 滚动到底部

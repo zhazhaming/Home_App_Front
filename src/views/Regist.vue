@@ -41,7 +41,8 @@ import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 
-const url = 'http://localhost:8100'
+import { ENV_CONFIG } from '../config/env'
+const url = ENV_CONFIG.API_BASE_URL
 const router = useRouter();
 const confirmPassword = ref('');
 

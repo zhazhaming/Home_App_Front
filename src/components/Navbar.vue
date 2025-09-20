@@ -36,6 +36,7 @@
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
 import { onMounted } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -48,9 +49,38 @@ const goToLogin = () => {
   router.push('/login'); 
 };
 
-const handleLogout = () => {
-  userStore.logout();
-  router.push('/');
+const handleLogout = async () => {
+  try {
+    // 确认退出登录
+    await ElMessageBox.confirm(
+      '确定要退出登录吗？',
+      '退出登录',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // 执行完整的退出登录流程
+    const success = await userStore.logoutWithServer();
+    
+    if (success) {
+      // 显示成功消息
+      ElMessage.success('已成功退出登录');
+      
+      // 跳转到首页
+      router.push('/');
+    } else {
+      ElMessage.error('退出登录失败，请重试');
+    }
+  } catch (error) {
+    // 用户取消退出
+    if (error !== 'cancel') {
+      console.error('退出登录失败:', error);
+      ElMessage.error('退出登录失败，请重试');
+    }
+  }
 };
 
 onMounted(() => {
@@ -94,6 +124,8 @@ onMounted(() => {
 .nav-items {
   display: flex;
   gap: 25px;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-item {
@@ -104,9 +136,15 @@ onMounted(() => {
   position: relative;
   padding: 5px 0;
   transition: color 0.3s ease;
+  display: inline-block;
 }
 
 .nav-item:hover {
+  color: #4285f4;
+}
+
+/* 活跃状态样式 */
+.nav-item.router-link-active {
   color: #4285f4;
 }
 
@@ -121,7 +159,8 @@ onMounted(() => {
   transition: width 0.3s ease;
 }
 
-.nav-item:hover::after {
+.nav-item:hover::after,
+.nav-item.router-link-active::after {
   width: 100%;
 }
 

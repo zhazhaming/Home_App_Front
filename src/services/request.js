@@ -1,28 +1,55 @@
 import axios from 'axios';
-import { useUserStore } from '../stores/userStore';
 import { ElMessage } from 'element-plus';
+import { useUserStore } from '../stores/userStore';
+import { ENV_CONFIG } from '../config/env';
+import { API_STATUS, ERROR_MESSAGES } from '../constants/api';
 
 // 创建axios实例
 const service = axios.create({
-  baseURL: import.meta.env.VITE_APP_BASE_API || 'http://localhost:8100',
-  timeout: 15000
+  baseURL: ENV_CONFIG.API_BASE_URL,
+  timeout: ENV_CONFIG.API_TIMEOUT,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
 // 是否正在刷新token
 let isRefreshing = false;
-// 重试队列，每一项将是一个待执行的函数形式
+// 重试队列
 let retryRequests = [];
 
 // 请求拦截器
 service.interceptors.request.use(
   config => {
     const userStore = useUserStore();
+    
+    // 添加认证头
     if (userStore.token) {
       config.headers['Authorization'] = `Bearer ${userStore.token}`;
     }
+    
+    // 添加请求时间戳（防止缓存）
+    if (config.method === 'get') {
+      config.params = {
+        ...config.params,
+        _t: Date.now()
+      };
+    }
+    
+    // 开发环境打印请求信息
+    if (ENV_CONFIG.DEBUG_MODE) {
+      console.log('🚀 API Request:', {
+        url: config.url,
+        method: config.method,
+        params: config.params,
+        data: config.data
+      });
+    }
+    
     return config;
   },
   error => {
+    console.error('❌ Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -30,15 +57,24 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   response => {
+    // 开发环境打印响应信息
+    if (ENV_CONFIG.DEBUG_MODE) {
+      console.log('✅ API Response:', {
+        url: response.config.url,
+        status: response.status,
+        data: response.data
+      });
+    }
+    
     return response.data;
   },
   async error => {
-    // 如果响应状态码是401（未授权）或者响应中包含token过期的信息
-    if (error.response && (error.response.status === 401 || 
-        (error.response.data && error.response.data.code === 401))) {
-      
-      const userStore = useUserStore();
-      const originalRequest = error.config;
+    const userStore = useUserStore();
+    const originalRequest = error.config;
+    
+    // 处理401未授权错误
+    if (error.response?.status === API_STATUS.UNAUTHORIZED || 
+        error.response?.data?.code === API_STATUS.UNAUTHORIZED) {
       
       // 如果没有refresh_token，直接登出
       if (!userStore.refresh_token) {
@@ -55,22 +91,21 @@ service.interceptors.response.use(
         
         try {
           // 尝试使用refresh_token获取新的token
-          const response = await axios.post('http://localhost:8100/user/refresh?id='+userStore.id, {
+          const response = await axios.post(`${ENV_CONFIG.API_BASE_URL}/user/refresh`, {
+            id: userStore.user_id,
             refresh_token: userStore.refresh_token
           });
           
-          if (response.data.code === 200) {
+          if (response.data.code === API_STATUS.SUCCESS) {
             // 更新token
             const newToken = response.data.data.token;
-            userStore.token = newToken;
-            localStorage.setItem('user_token', newToken);
+            userStore.setToken(newToken);
             
             // 更新当前请求的Authorization头
             originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
             
             // 执行队列中的请求
             retryRequests.forEach(cb => cb(newToken));
-            // 清空队列
             retryRequests = [];
             
             // 重试当前请求
@@ -102,9 +137,36 @@ service.interceptors.response.use(
       }
     }
     
-    // 其他错误直接返回
+    // 处理其他错误
+    const errorMessage = getErrorMessage(error);
+    ElMessage.error(errorMessage);
+    
     return Promise.reject(error);
   }
 );
+
+// 获取错误消息
+function getErrorMessage(error) {
+  if (error.response) {
+    const status = error.response.status;
+    const message = error.response.data?.message || error.response.data?.msg;
+    
+    if (message) {
+      return message;
+    }
+    
+    return ERROR_MESSAGES[status] || ERROR_MESSAGES.UNKNOWN_ERROR;
+  }
+  
+  if (error.request) {
+    return ERROR_MESSAGES.NETWORK_ERROR;
+  }
+  
+  if (error.code === 'ECONNABORTED') {
+    return ERROR_MESSAGES.TIMEOUT_ERROR;
+  }
+  
+  return ERROR_MESSAGES.UNKNOWN_ERROR;
+}
 
 export default service;

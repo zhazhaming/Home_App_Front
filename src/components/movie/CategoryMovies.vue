@@ -22,6 +22,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import Sidebar from '@/components/Sidebar.vue';
 import HeaderBar from '@/components/HeaderBar.vue';
+import { ENV_CONFIG } from '../../config/env';
 
 const route = useRoute();
 const router = useRouter();
@@ -30,7 +31,7 @@ const categoryName = ref('');
 
 const fetchMoviesByCategory = async (category) => {
   try {
-    const response = await axios.get(`http://localhost:8100/movice/getByCategory?category=${category}`);
+    const response = await axios.get(`${ENV_CONFIG.API_BASE_URL}/movice/getByCategory?category=${category}`);
     movies.value = response.data.data;
   } catch (error) {
     console.error('Error fetching movies by category:', error);

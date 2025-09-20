@@ -42,7 +42,8 @@
   import { useUserStore } from '../stores/userStore';
   import { ElMessage } from 'element-plus';
 
-  const url = 'http://localhost:8100';
+  import { ENV_CONFIG } from '../config/env';
+  const url = ENV_CONFIG.API_BASE_URL;
   const router = useRouter();
   const userStore = useUserStore();
   const use_data = reactive({id: '', username: '', password: '', token: ''});
@@ -64,9 +65,13 @@
         userStore.setUserInfo({
           user_id: use_data.id,
           username: use_data.username,
+          email: response.data.data.email || '',
           token: use_data.token,
           avatar: response.data.data.avatar || 'http://120.78.1.49/group1/M00/00/00/rBhVEWfVteKAFat3AADG2omeE7U077.jpg'
         });
+        
+        // 登录成功后立即获取完整的用户信息（包括最新头像）
+        await userStore.fetchUserInfo();
         
         console.log(use_data.token);
         router.push('/'); // 登录成功后跳转到首页

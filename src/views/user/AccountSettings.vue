@@ -10,11 +10,15 @@
           <div class="avatar-actions">
             <el-upload
               class="avatar-uploader"
-              action="http://localhost:8100/user/upload-avatar"
+              :action="ENV_CONFIG.UPLOAD_URL || `${ENV_CONFIG.API_BASE_URL}/api/files/uploadPic`"
               :headers="uploadHeaders"
               :show-file-list="false"
               :on-success="handleAvatarSuccess"
+              :on-error="handleAvatarError"
               :before-upload="beforeAvatarUpload"
+              :on-progress="handleAvatarProgress"
+              name="file"
+              accept="image/jpeg,image/png"
             >
               <el-button type="primary">更换头像</el-button>
             </el-upload>
@@ -95,19 +99,27 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '../../stores/userStore';
-import request from '../../utils/request';
+import request from '../../services/request';
+import { ENV_CONFIG } from '../../config/env';
 
 const userStore = useUserStore();
-const avatar = ref(userStore.avatar);
+const avatar = ref('');
 const userFormRef = ref(null);
 
 // 上传头像的请求头
-const uploadHeaders = {
-  Authorization: `Bearer ${userStore.token}`
-};
+const uploadHeaders = computed(() => {
+  const token = userStore.token || localStorage.getItem('user_token');
+  console.log('当前使用的token:', token); // 调试用
+  return {
+    Authorization: `Bearer ${token}`,
+    // 可能需要添加其他头信息
+    'X-Token': token, // 有些后端可能使用不同的头名称
+    'token': token // 简单的token头
+  };
+});
 
 // 表单数据
 const userForm = reactive({
@@ -196,6 +208,15 @@ const fetchUserInfo = async () => {
       if (userData.avatar) {
         userForm.avatar = userData.avatar;
         avatar.value = userData.avatar;
+        // 同时更新 userStore 中的头像
+        userStore.setUserInfo({
+          user_id: userStore.user_id,
+          username: userStore.username,
+          email: userStore.email,
+          token: userStore.token,
+          refresh_token: userStore.refresh_token,
+          avatar: userData.avatar
+        });
       }
     }
   } catch (error) {
@@ -206,17 +227,73 @@ const fetchUserInfo = async () => {
 
 // 头像上传成功处理
 const handleAvatarSuccess = (response) => {
+  console.log('头像上传响应:', response); // 调试用
+  
   if (response.code === 200) {
-    avatar.value = response.data.avatarUrl;
-    userForm.avatar = response.data.avatarUrl; // 更新表单中的头像
+    // 从后端响应中获取头像URL
+    // 根据实际后端返回的数据结构调整
+    let avatarUrl = '';
+    
+    if (response.data) {
+      // 如果后端直接返回URL字符串
+      if (typeof response.data === 'string') {
+        avatarUrl = response.data;
+      }
+      // 如果后端返回对象，包含url字段
+      else if (response.data.url) {
+        avatarUrl = response.data.url;
+      }
+      // 如果后端返回对象，包含avatarUrl字段
+      else if (response.data.avatarUrl) {
+        avatarUrl = response.data.avatarUrl;
+      }
+      // 如果后端返回对象，包含avatar字段
+      else if (response.data.avatar) {
+        avatarUrl = response.data.avatar;
+      }
+    }
+    
+    // 如果从响应中获取不到URL，尝试构建URL
+    if (!avatarUrl && response.data && response.data.fileName) {
+      avatarUrl = `${ENV_CONFIG.API_BASE_URL}/uploads/${response.data.fileName}`;
+    }
+    
+    // 如果仍然没有URL，使用当前头像
+    if (!avatarUrl) {
+      avatarUrl = userStore.avatar || '';
+    }
+    
+    console.log('更新头像URL:', avatarUrl); // 调试用
+    
+    // 更新头像显示
+    avatar.value = avatarUrl;
+    userForm.avatar = avatarUrl; // 更新表单中的头像
+    
+    // 更新用户存储中的头像
     userStore.setUserInfo({
-      ...userStore,
-      avatar: response.data.avatarUrl
+      user_id: userStore.user_id,
+      username: userStore.username,
+      email: userStore.email,
+      token: userStore.token,
+      refresh_token: userStore.refresh_token,
+      avatar: avatarUrl
     });
+    
     ElMessage.success('头像上传成功');
   } else {
-    ElMessage.error(response.message || '头像上传失败');
+    ElMessage.error(response.msg || response.message || '头像上传失败');
   }
+};
+
+// 头像上传失败处理
+const handleAvatarError = (error) => {
+  console.error('头像上传失败:', error);
+  ElMessage.error('头像上传失败，请重试');
+};
+
+// 头像上传进度处理
+const handleAvatarProgress = (event) => {
+  console.log('上传进度:', Math.round(event.percent) + '%');
 };
 
 // 头像上传前的验证
@@ -270,17 +347,16 @@ const submitForm = async () => {
           
           // 更新 store 中的用户信息
           const updatedUserInfo = {
-            ...userStore.$state,
+            user_id: userStore.user_id,
             username: userForm.username,
-            avatar: userForm.avatar,
-            phone: userForm.phone,
             email: userForm.email,
-            gender: parseInt(userForm.gender)
+            phone: userForm.phone,
+            gender: parseInt(userForm.gender),
+            token: userStore.token,
+            refresh_token: userStore.refresh_token,
+            avatar: userForm.avatar
           };
           userStore.setUserInfo(updatedUserInfo);
-          
-          // 同时更新localStorage中的用户信息
-          localStorage.setItem('user_info', JSON.stringify(updatedUserInfo));
           
           // 清空密码字段
           userForm.oldPassword = '';
@@ -314,16 +390,25 @@ const resetForm = () => {
   }
 };
 
+// 监听 userStore.avatar 的变化，确保头像同步
+watch(() => userStore.avatar, (newAvatar) => {
+  if (newAvatar) {
+    avatar.value = newAvatar;
+    userForm.avatar = newAvatar;
+  }
+}, { immediate: true });
+
 onMounted(() => {
-  // 确保用户信息已加载
-  userStore.checkLoginStatus();
-  fetchUserInfo();
+  userStore.checkLoginStatus(); // 检查用户登录状态
+  fetchUserInfo(); // 获取用户信息
 });
 </script>
 
 <style scoped>
 .account-settings {
   animation: fadeIn 0.5s ease;
+  width: 100%;
+  max-width: none;
 }
 
 .section-title {
@@ -345,17 +430,27 @@ onMounted(() => {
 }
 
 .settings-content {
-  max-width: 800px;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
 }
 
 .avatar-section {
-  margin-bottom: 30px;
+  margin-bottom: 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
 }
 
 .avatar-container {
   display: flex;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 .current-avatar {
@@ -379,17 +474,24 @@ onMounted(() => {
 }
 
 .info-section {
-  margin-top: 30px;
+  margin-top: 0;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
 }
 
 .info-section h3 {
   font-size: 18px;
   color: #333;
   margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #409eff;
 }
 
 .user-form {
-  max-width: 500px;
+  width: 100%;
+  max-width: none;
 }
 
 @keyframes fadeIn {
@@ -400,6 +502,48 @@ onMounted(() => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .avatar-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .avatar-actions {
+    margin-left: 0;
+    margin-top: 20px;
+  }
+  
+  .user-form {
+    max-width: 100%;
+  }
+  
+  .section-title {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+  
+  .avatar-section {
+    margin-bottom: 20px;
+  }
+  
+  .info-section {
+    margin-top: 20px;
+  }
+  
+  .info-section h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
   }
 }
 </style> 

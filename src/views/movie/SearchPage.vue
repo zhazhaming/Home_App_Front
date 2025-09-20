@@ -28,8 +28,8 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMovieStore } from '../../stores/movieStore';
-import Sidebar from './Sidebar.vue';
-import HeaderBar from './HeaderBar.vue';
+import Sidebar from '../../components/movie/Sidebar.vue';
+import HeaderBar from '../../components/movie/HeaderBar.vue';
 
 const router = useRouter();
 const movieStore = useMovieStore();

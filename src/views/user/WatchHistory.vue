@@ -66,6 +66,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import axios from 'axios';
+import { ENV_CONFIG } from '../../config/env';
 import { useUserStore } from '../../stores/userStore';
 
 const props = defineProps({
@@ -137,7 +138,7 @@ const formatTime = (timeString) => {
 // 获取观看历史
 const fetchWatchHistory = async () => {
   try {
-    const response = await axios.get('http://localhost:8100/user/watch-history', {
+    const response = await axios.get(`${ENV_CONFIG.API_BASE_URL}/user/watch-history`, {
       params: {
         timeRange: selectedTimeRange.value,
         page: currentPage.value,
@@ -192,7 +193,7 @@ const removeHistory = (historyId) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const response = await axios.delete(`http://localhost:8100/user/watch-history/${historyId}`, {
+      const response = await axios.delete(`${ENV_CONFIG.API_BASE_URL}/user/watch-history/${historyId}`, {
         headers: { Authorization: `Bearer ${userStore.token}` }
       });
       

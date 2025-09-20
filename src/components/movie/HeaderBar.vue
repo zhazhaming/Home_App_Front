@@ -25,12 +25,13 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { ENV_CONFIG } from '../../config/env';
 import { useMovieStore } from '../../stores/movieStore';
 import { useUserStore } from '../../stores/userStore';
 
 const query = ref('');
 const router = useRouter();
-const search_url = ref('http://localhost:8100/movice/');
+const search_url = ref(`${ENV_CONFIG.API_BASE_URL}/movice/`);
 const movieStore = useMovieStore();
 const userStore = useUserStore();
 
@@ -38,7 +39,7 @@ const search = async () => {
   if (query.value.trim()) {
     try {
       console.log(search_url.value + 'getByName?name=' + query.value);
-      const response = await axios.get(`http://localhost:8100/movice/getByName?name=${query.value}`);
+      const response = await axios.get(`${ENV_CONFIG.API_BASE_URL}/movice/getByName?name=${query.value}`);
       if (response.data.code === 200) {
         console.log('Movies data:', response.data.data);
         movieStore.setMovies(response.data.data);
