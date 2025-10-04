@@ -9,8 +9,8 @@
         <router-link to="/" class="nav-item">首页</router-link>
         <router-link to="/movie" class="nav-item">电影影厅</router-link>
         <router-link to="/ai-chat" class="nav-item">AI Chat</router-link>
-        <router-link to="/smart-home" class="nav-item">智能家庭</router-link>
-        <router-link to="/more" class="nav-item">更多</router-link>
+        <span @click="handleSmartHomeClick" class="nav-item nav-item-disabled">智能家庭</span>
+        <span @click="handleMoreClick" class="nav-item nav-item-disabled">更多</span>
       </div>
       
       <!-- 根据登录状态显示不同内容 -->
@@ -47,6 +47,16 @@ const goToUserCenter = () => {
 
 const goToLogin = () => {
   router.push('/login'); 
+};
+
+// 处理智能家庭点击
+const handleSmartHomeClick = () => {
+  ElMessage.info('该功能尚未开发，敬请期待');
+};
+
+// 处理更多点击
+const handleMoreClick = () => {
+  ElMessage.info('该功能尚未开发，敬请期待');
 };
 
 const handleLogout = async () => {
@@ -162,6 +172,21 @@ onMounted(() => {
 .nav-item:hover::after,
 .nav-item.router-link-active::after {
   width: 100%;
+}
+
+/* 禁用状态样式 */
+.nav-item-disabled {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.nav-item-disabled:hover {
+  color: #4285f4;
+  opacity: 1;
+}
+
+.nav-item-disabled::after {
+  display: none;
 }
 
 .go-button {

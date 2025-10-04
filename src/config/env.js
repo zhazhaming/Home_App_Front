@@ -5,7 +5,8 @@ export const ENV_CONFIG = {
   APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
   
   // API配置
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://120.78.1.49:8100',
+  // API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://120.78.1.49:8100',
+  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100',
   API_TIMEOUT: Number(import.meta.env.VITE_API_TIMEOUT) || 15000,
   
   // 环境判断
@@ -16,7 +17,8 @@ export const ENV_CONFIG = {
   
   // 文件上传配置
   MAX_FILE_SIZE: Number(import.meta.env.VITE_MAX_FILE_SIZE) || 5 * 1024 * 1024,
-  UPLOAD_URL: import.meta.env.VITE_UPLOAD_URL || 'http://120.78.1.49:8100//api/files/uploadPic',
+  // UPLOAD_URL: import.meta.env.VITE_UPLOAD_URL || 'http://120.78.1.49:8100//api/files/uploadPic',
+  UPLOAD_URL: import.meta.env.VITE_UPLOAD_URL || 'http://localhost:8100//api/files/uploadPic',
   
   // 缓存配置
   CACHE_PREFIX: import.meta.env.VITE_CACHE_PREFIX || 'my_home_',

@@ -14,16 +14,6 @@
           </div>
         </div>
         <div class="section-header">
-          <h2>电影排行榜</h2>
-          <button @click="viewMore('movies')">更多</button>
-        </div>
-        <div class="movie-list">
-          <div class="movie-card" v-for="(movie, index) in movies" :key="movie.id">
-            <img :src="movie.img_url" alt="Movie Poster" @click="goToMovieDetail(movie.id)" class="clickable">
-            <p @click="goToMovieDetail(movie.id)" class="clickable">{{ movie.name }}</p>
-          </div>
-        </div>
-        <div class="section-header">
           <h2>新片上映</h2>
           <button @click="viewMore('newMovies')">更多</button>
         </div>
@@ -31,6 +21,16 @@
           <div class="movie-card" v-for="(newMovie, index) in newMovies" :key="newMovie.id">
             <img :src="newMovie.img_url" alt="New Movie Poster" @click="goToMovieDetail(newMovie.id)" class="clickable">
             <p @click="goToMovieDetail(newMovie.id)" class="clickable">{{ newMovie.name }}</p>
+          </div>
+        </div>
+        <div class="section-header">
+          <h2>电影排行榜</h2>
+          <button @click="viewMore('movies')">更多</button>
+        </div>
+        <div class="movie-list">
+          <div class="movie-card" v-for="(movie, index) in movies" :key="movie.id">
+            <img :src="movie.img_url" alt="Movie Poster" @click="goToMovieDetail(movie.id)" class="clickable">
+            <p @click="goToMovieDetail(movie.id)" class="clickable">{{ movie.name }}</p>
           </div>
         </div>
         <div class="section-header">
@@ -71,6 +71,7 @@ import Sidebar from '../../components/movie/Sidebar.vue';
 import HeaderBar from '../../components/movie/HeaderBar.vue';
 import { useUserStore } from '../../stores/userStore';
 import { ENV_CONFIG } from '../../config/env';
+import { movieAPI } from '../../services/api';
 
 export default {
   components: {
@@ -97,7 +98,7 @@ const movies = ref([]);
 
     const fetchNewMovies = async () => {
       try {
-        const response = await axios.get(request_url.value + 'getHotMovie?pageNum=1&pageSize=12');
+        const response = await axios.get(request_url.value + 'getMoviesRecent?pageNum=1&pageSize=12');
         newMovies.value = response.data.data;
       } catch (error) {
         console.error('Error fetching new movies:', error);
@@ -106,7 +107,7 @@ const movies = ref([]);
 
     const fetchHotMovies = async () => {
       try {
-        const response = await axios.get(request_url.value + 'getMoviesRecent?pageNum=1&pageSize=12');
+        const response = await axios.get(request_url.value + 'getHotMovie?pageNum=1&pageSize=12');
         hotMovies.value = response.data.data;
       } catch (error) {
         console.error('Error fetching hot movies:', error);
@@ -115,7 +116,8 @@ const movies = ref([]);
 
     const viewMore = (category) => {
       console.log(`View more ${category}`);
-      // 在这里实现跳转逻辑
+      // 跳转到分类电影页面
+      router.push({ name: 'CategoryMovies', params: { category } });
     };
 
     const handleScroll = (event) => {

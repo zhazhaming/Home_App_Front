@@ -18,15 +18,19 @@ export const API_ENDPOINTS = {
   
   // 电影相关
   MOVIE: {
-    LIST: '/movie/list',
-    DETAIL: '/movie/detail',
-    SEARCH: '/movie/search',
-    CATEGORY: '/movie/category',
-    RECOMMEND: '/movie/recommend',
-    RATING: '/movie/rating',
-    COMMENT: '/movie/comment',
-    FAVORITE: '/movie/favorite',
-    BOOKMARK: '/movie/bookmark'
+    LIST: '/movice/list',
+    DETAIL: '/movice/detail',
+    SEARCH: '/movice/search',
+    CATEGORY: '/movice/category',
+    RECOMMEND: '/movice/recommend',
+    POPULAR: '/movice/getPopular',
+    RECENT: '/movice/getMoviesRecent',
+    HOT: '/movice/getHotMovie',
+    RATING: '/movice/rating',
+    COMMENT: '/movice/comment',
+    FAVORITE: '/movice/favorite',
+    BOOKMARK: '/movice/bookmark',
+    RESERVATION: '/movice/reservation'
   },
   
   // 文件上传

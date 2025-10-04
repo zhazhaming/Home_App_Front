@@ -10,6 +10,7 @@
 </template>
 
 <script>
+import { ElMessage } from 'element-plus';
 export default {
   data() {
     return {
@@ -22,11 +23,17 @@ export default {
         { name: '今日更新', route: '/updates' },
         { name: '明星库', route: '/stars' },
         { name: '热搜榜', route: '/trending' }
-      ]
+      ],
+      comingSoonRoutes: ['/series', '/anime', '/shows', '/updates', '/stars', '/trending']
     };
   },
   methods: {
     navigate(route) {
+      // 对未开发的页面给出提示并拦截跳转
+      if (this.comingSoonRoutes.includes(route)) {
+        ElMessage.info('该功能尚未开发，敬请期待');
+        return;
+      }
       this.$router.push(route);
     }
   }

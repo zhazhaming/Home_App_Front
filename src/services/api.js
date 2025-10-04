@@ -77,6 +77,15 @@ export const movieAPI = {
   // 获取推荐电影
   getRecommendMovies: (params) => request.get(API_ENDPOINTS.MOVIE.RECOMMEND, { params }),
   
+  // 获取热门电影
+  getPopularMovies: (params) => request.get(API_ENDPOINTS.MOVIE.POPULAR, { params }),
+  
+  // 获取最新电影
+  getRecentMovies: (params) => request.get(API_ENDPOINTS.MOVIE.RECENT, { params }),
+  
+  // 获取热播电影
+  getHotMovies: (params) => request.get(API_ENDPOINTS.MOVIE.HOT, { params }),
+  
   // 电影评分
   rateMovie: (movieId, rating) => request.post(API_ENDPOINTS.MOVIE.RATING, { movieId, rating }),
   
@@ -87,7 +96,10 @@ export const movieAPI = {
   favoriteMovie: (movieId) => request.post(API_ENDPOINTS.MOVIE.FAVORITE, { movieId }),
   
   // 预约电影
-  bookmarkMovie: (movieId) => request.post(API_ENDPOINTS.MOVIE.BOOKMARK, { movieId })
+  bookmarkMovie: (movieId) => request.post(API_ENDPOINTS.MOVIE.BOOKMARK, { movieId }),
+  
+  // 电影预约提醒
+  reserveMovie: (data) => request.post(API_ENDPOINTS.MOVIE.RESERVATION, data)
 };
 
 // 文件上传API

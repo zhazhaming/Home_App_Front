@@ -11,6 +11,9 @@ import MovieDetail from '../views/movie/MovieDetail.vue';
 import UserCenter from '../views/user/personal_center.vue';
 import AccountSettings from '../views/user/AccountSettings.vue';
 import MyTheater from '../views/user/MyTheater.vue';
+import CategoryMovies from '../components/movie/CategoryMovies.vue';
+import MyAIChat from '../views/chat/AIChat.vue';
+import Notification from '../views/user/Notification.vue';
 
 
 // 定义路由
@@ -21,6 +24,9 @@ const routes = [
   { path: '/movie',  name:'MovieIndex', component: MovieView },
   { path: '/search', name: 'SearchPage', component: SearchPage },
   { path: '/movie/:id', name: 'MovieDetail', component: MovieDetail },
+  { path: '/movie/category/:category', name: 'CategoryMovies', component: CategoryMovies },
+  { path: '/ai-chat', name: 'MyAIChat', component: MyAIChat },
+  { path: '/notification', name: 'Notification', component: Notification },
   { path: '/user/center', name: 'UserCenter', component: UserCenter },
   { path: '/user/account-settings', name: 'AccountSettings', component: AccountSettings },
   { path: '/user/my-theater', name: 'MyTheater', component: MyTheater },

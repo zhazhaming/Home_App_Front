@@ -4,36 +4,51 @@
       <el-input v-model="query" placeholder="搜索电影、电视剧、综艺、动漫"></el-input>
       <el-button type="primary" @click="search">搜索</el-button>
     </div>
-    <div class="user-info">
-      <el-dropdown v-if="userStore.isLoggedIn">
-        <span class="el-dropdown-link">
-          <el-avatar :src="userStore.avatar"></el-avatar>
-        </span>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item @click="goToUserCenter">个人中心</el-dropdown-item>
-            <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <el-button v-else type="primary" @click="goToLogin">登录</el-button>
+    <div class="header-right">
+      <!-- 通知图标 -->
+      <div v-if="userStore.isLoggedIn" class="notification-icon" @click="goToNotification">
+        <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
+          <el-icon :size="24" class="notification-bell">
+            <Bell />
+          </el-icon>
+        </el-badge>
+      </div>
+      <!-- 用户信息 -->
+      <div class="user-info">
+        <el-dropdown v-if="userStore.isLoggedIn">
+          <span class="el-dropdown-link">
+            <el-avatar :src="userStore.avatar"></el-avatar>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="goToUserCenter">个人中心</el-dropdown-item>
+              <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button v-else type="primary" @click="goToLogin">登录</el-button>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { Bell } from '@element-plus/icons-vue';
 import { ENV_CONFIG } from '../../config/env';
 import { useMovieStore } from '../../stores/movieStore';
 import { useUserStore } from '../../stores/userStore';
+import { getUnreadCount } from '../../services/notificationApi';
 
 const query = ref('');
 const router = useRouter();
 const search_url = ref(`${ENV_CONFIG.API_BASE_URL}/movice/`);
 const movieStore = useMovieStore();
 const userStore = useUserStore();
+const unreadCount = ref(0);
+let pollingInterval = null;
 
 const search = async () => {
   if (query.value.trim()) {
@@ -53,6 +68,25 @@ const search = async () => {
   }
 };
 
+// 获取未读通知数量
+const fetchUnreadCount = async () => {
+  if (!userStore.isLoggedIn || !userStore.user_id) return;
+  
+  try {
+    const response = await getUnreadCount(userStore.user_id);
+    if (response.data.code === 200) {
+      unreadCount.value = response.data.data || 0;
+    }
+  } catch (error) {
+    console.error('获取未读通知数量失败:', error);
+  }
+};
+
+// 跳转到通知页面
+const goToNotification = () => {
+  router.push('/notification');
+};
+
 const goToLogin = () => {
   router.push('/login');
 };
@@ -68,6 +102,23 @@ const goToUserCenter = () => {
 
 onMounted(() => {
   userStore.checkLoginStatus();
+  
+  // 首次加载获取未读数量
+  if (userStore.isLoggedIn) {
+    fetchUnreadCount();
+    
+    // 每30秒轮询一次未读数量
+    pollingInterval = setInterval(() => {
+      fetchUnreadCount();
+    }, 30000);
+  }
+});
+
+onUnmounted(() => {
+  // 清除轮询
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
 });
 </script>
 
@@ -90,10 +141,40 @@ onMounted(() => {
   flex: 1;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-left: 20px;
+}
+
+.notification-icon {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.notification-icon:hover {
+  background-color: #e6f7ff;
+}
+
+.notification-bell {
+  color: #606266;
+  transition: all 0.3s ease;
+}
+
+.notification-icon:hover .notification-bell {
+  color: #409EFF;
+  transform: rotate(20deg);
+}
+
 .user-info {
   display: flex;
   align-items: center;
-  margin-left: 20px;
 }
 
 .el-input {
@@ -108,5 +189,10 @@ onMounted(() => {
   cursor: pointer;
   display: flex;
   align-items: center;
+}
+
+:deep(.el-badge__content) {
+  background-color: #f56c6c;
+  border: 2px solid #fff;
 }
 </style>
