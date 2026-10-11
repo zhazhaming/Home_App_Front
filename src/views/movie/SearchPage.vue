@@ -93,7 +93,9 @@ const goBack = () => {
 
 .movie-card img {
   width: 100%;
-  height: auto;
+  aspect-ratio: 2 / 3;      /* 海报统一 2:3 比例，裁切填满，保证所有图片大小一致 */
+  object-fit: cover;
+  display: block;
 }
 
 .movie-info {

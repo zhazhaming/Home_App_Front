@@ -20,15 +20,15 @@
       <!-- 预约/收藏 -->
       <BookmarkCollection v-if="activeMenu === 'bookmark'" />
       
-      <!-- 我的AI Chat -->
-      <MyAIChat v-if="activeMenu === 'ai-chat'" />
+      <!-- AI聊天设置（API Key配置） -->
+      <AiChatSettings v-if="activeMenu === 'ai-chat'" />
       
       <!-- 我的家庭 -->
       <MyHome v-if="activeMenu === 'home'" />
-      
+
       <!-- 积分设置 -->
       <PointsSettings v-if="activeMenu === 'points'" />
-      
+
       <!-- 会员中心 -->
       <MemberCenter v-if="activeMenu === 'member'" />
     </div>
@@ -46,10 +46,10 @@ import AccountSettings from './AccountSettings.vue';
 import ViewingSettings from './ViewingSettings.vue';
 import WatchHistory from './WatchHistory.vue';
 import BookmarkCollection from './BookmarkCollection.vue';
-import MyAIChat from './MyAIChat.vue';
-// import MyHome from './MyHome.vue';
-// import PointsSettings from './PointsSettings.vue';
-// import MemberCenter from './MemberCenter.vue';
+import AiChatSettings from './AiChatSettings.vue';
+import MyHome from './MyHome.vue';
+import PointsSettings from './PointsSettings.vue';
+import MemberCenter from './MemberCenter.vue';
 
 const route = useRoute();
 const router = useRouter();

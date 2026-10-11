@@ -18,6 +18,14 @@ let isRefreshing = false;
 // 重试队列
 let retryRequests = [];
 
+// 判断是否为登录过期错误（后端登录过期返回业务码509，HTTP状态同样是509）
+function isAuthExpiredError(error) {
+  const status = error.response?.status;
+  const code = error.response?.data?.code;
+  return status === API_STATUS.UNAUTHORIZED || code === API_STATUS.UNAUTHORIZED ||
+         status === 509 || code === 509;
+}
+
 // 请求拦截器
 service.interceptors.request.use(
   config => {
@@ -72,10 +80,9 @@ service.interceptors.response.use(
     const userStore = useUserStore();
     const originalRequest = error.config;
     
-    // 处理401未授权错误
-    if (error.response?.status === API_STATUS.UNAUTHORIZED || 
-        error.response?.data?.code === API_STATUS.UNAUTHORIZED) {
-      
+    // 处理登录过期（401或后端509）
+    if (isAuthExpiredError(error)) {
+
       // 如果没有refresh_token，直接登出
       if (!userStore.refresh_token) {
         userStore.logout();
@@ -83,31 +90,37 @@ service.interceptors.response.use(
         window.location.href = '/login';
         return Promise.reject(error);
       }
-      
+
       // 如果不是刷新token的请求，并且还没有正在刷新
       if (!originalRequest._retry && !isRefreshing) {
         originalRequest._retry = true;
         isRefreshing = true;
-        
+
         try {
-          // 尝试使用refresh_token获取新的token
-          const response = await axios.post(`${ENV_CONFIG.API_BASE_URL}/user/refresh`, {
-            id: userStore.user_id,
-            refresh_token: userStore.refresh_token
+          // 后端/user/refresh使用@RequestParam接收id，必须以query参数传递
+          const response = await axios.post(`${ENV_CONFIG.API_BASE_URL}/user/refresh`, null, {
+            params: { id: userStore.user_id }
           });
-          
-          if (response.data.code === API_STATUS.SUCCESS) {
-            // 更新token
+
+          if (response.data.code === API_STATUS.SUCCESS && response.data.data?.token) {
+            // 更新token（setUserInfo内部会同步localStorage）
+            userStore.setUserInfo({
+              user_id: userStore.user_id,
+              username: userStore.username,
+              email: userStore.email,
+              token: response.data.data.token,
+              refresh_token: response.data.data.refreshToken || userStore.refresh_token,
+              avatar: userStore.avatar
+            });
             const newToken = response.data.data.token;
-            userStore.setToken(newToken);
-            
+
             // 更新当前请求的Authorization头
             originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-            
+
             // 执行队列中的请求
             retryRequests.forEach(cb => cb(newToken));
             retryRequests = [];
-            
+
             // 重试当前请求
             return service(originalRequest);
           } else {
@@ -118,7 +131,7 @@ service.interceptors.response.use(
             return Promise.reject(error);
           }
         } catch (refreshError) {
-          // 刷新token出错，登出
+          // 刷新token出错（如长效token也已失效），登出并回到登录页
           userStore.logout();
           ElMessage.error('登录已过期，请重新登录');
           window.location.href = '/login';

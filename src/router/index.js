@@ -12,6 +12,7 @@ import UserCenter from '../views/user/personal_center.vue';
 import AccountSettings from '../views/user/AccountSettings.vue';
 import MyTheater from '../views/user/MyTheater.vue';
 import CategoryMovies from '../components/movie/CategoryMovies.vue';
+import TypeMovies from '../views/movie/TypeMovies.vue';
 import MyAIChat from '../views/chat/AIChat.vue';
 import Notification from '../views/user/Notification.vue';
 
@@ -25,6 +26,9 @@ const routes = [
   { path: '/search', name: 'SearchPage', component: SearchPage },
   { path: '/movie/:id', name: 'MovieDetail', component: MovieDetail },
   { path: '/movie/category/:category', name: 'CategoryMovies', component: CategoryMovies },
+  { path: '/series', name: 'Series', component: TypeMovies, props: { type: 'tv', title: '连续剧' } },
+  { path: '/anime', name: 'Anime', component: TypeMovies, props: { type: 'anime', title: '动漫' } },
+  { path: '/shows', name: 'Shows', component: TypeMovies, props: { type: 'variety', title: '综艺节目' } },
   { path: '/ai-chat', name: 'MyAIChat', component: MyAIChat },
   { path: '/notification', name: 'Notification', component: Notification },
   { path: '/user/center', name: 'UserCenter', component: UserCenter },

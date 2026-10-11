@@ -335,9 +335,23 @@ const goToMovieDetail = (id) => {
 
 .movie-card img {
   width: 100%;
-  height: auto;
+  aspect-ratio: 2 / 3;      /* 海报统一 2:3 比例，裁切填满，保证所有图片大小一致 */
+  object-fit: cover;
+  display: block;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.movie-card p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  /* 标题最多两行且占满两行高度，保证每行卡片对齐 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.8em;
 }
 
 button {

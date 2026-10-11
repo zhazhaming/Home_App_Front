@@ -2,7 +2,8 @@
   <aside class="sidebar">
     <div class="logo">HOME VIDEO</div>
     <ul>
-      <li v-for="item in menuItems" :key="item.name" @click="navigate(item.route)" class="menu-item">
+      <li v-for="item in menuItems" :key="item.name" @click="navigate(item.route)"
+          class="menu-item" :class="{ active: $route.path === item.route }">
         {{ item.name }}
       </li>
     </ul>
@@ -24,7 +25,8 @@ export default {
         { name: '明星库', route: '/stars' },
         { name: '热搜榜', route: '/trending' }
       ],
-      comingSoonRoutes: ['/series', '/anime', '/shows', '/updates', '/stars', '/trending']
+      // 尚未开发的页面，点击给出提示
+      comingSoonRoutes: ['/updates', '/stars', '/trending']
     };
   },
   methods: {
@@ -72,6 +74,11 @@ ul {
 }
 
 .menu-item:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.menu-item.active {
   background-color: #007bff;
   color: white;
 }
